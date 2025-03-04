@@ -9,12 +9,14 @@ public class MatrixMultiplication {
         Result result = new Result(rowsA, colsB);
 
         ExecutorService executor = Executors.newFixedThreadPool(threads);
+        CountDownLatch latch = new CountDownLatch(threads);
 
         for (int threadId = 0; threadId < threads; threadId++) {
             final int start = threadId * (rowsA / threads);
             final int end = (threadId == threads - 1) ? rowsA : start + (rowsA / threads);
 
             executor.submit(() -> {
+                try {
                     for (int i = start; i < end; i++) {
                         for (int k = 0; k < colsA; k++) {
                             double multiplier = A[i][k];
@@ -23,11 +25,14 @@ public class MatrixMultiplication {
                             }
                         }
                     }
+                } finally {
+                    latch.countDown();
+                }
             });
         }
 
+        latch.await();
         executor.shutdown();
-        executor.awaitTermination(1, TimeUnit.NANOSECONDS);
 
         return result;
     }
@@ -37,6 +42,7 @@ public class MatrixMultiplication {
         Result result = new Result(n, n);
 
         ExecutorService executor = Executors.newFixedThreadPool(threads);
+        CountDownLatch latch = new CountDownLatch(threads);
 
         int blockSize = n / threads;
 
@@ -45,6 +51,7 @@ public class MatrixMultiplication {
             final int end = (threadId == threads - 1) ? n : start + blockSize;
 
             executor.submit(() -> {
+                try {
                     for (int i = start; i < end; i++) {
                         for (int k = 0; k < n; k++) {
                             double multiplier = A[i][k];
@@ -53,11 +60,14 @@ public class MatrixMultiplication {
                             }
                         }
                     }
+                } finally {
+                    latch.countDown();
+                }
             });
         }
 
+        latch.await();
         executor.shutdown();
-        executor.awaitTermination(1, TimeUnit.NANOSECONDS);
 
         return result;
     }
